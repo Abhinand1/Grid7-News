@@ -2,7 +2,6 @@ import { GoogleGenAI } from "@google/genai";
 import { NewsArticle, Category } from "../types";
 import { getRandomTechImage } from "../constants";
 
-// Initialization as per guidelines
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Fallback parser to extract JSON from Markdown code blocks
