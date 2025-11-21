@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NewsArticle, Category } from '../types';
-import { X, Share2, ExternalLink, Calendar, Check, Search, Rocket } from 'lucide-react';
-import { CATEGORY_CONFIG } from '../constants';
+import { X, Share2, ExternalLink, Calendar, Check, Search } from 'lucide-react';
+import { CATEGORY_CONFIG, getRandomTechImage } from '../constants';
 
 interface NewsModalProps {
   article: NewsArticle | null;
@@ -10,6 +10,14 @@ interface NewsModalProps {
 
 const NewsModal: React.FC<NewsModalProps> = ({ article, onClose }) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [imgSrc, setImgSrc] = useState<string>('');
+
+  // Sync local image state with article prop
+  useEffect(() => {
+    if (article) {
+      setImgSrc(article.imageUrl || '');
+    }
+  }, [article]);
 
   // Handle Back Button Logic
   useEffect(() => {
@@ -18,7 +26,7 @@ const NewsModal: React.FC<NewsModalProps> = ({ article, onClose }) => {
       window.history.pushState({ modalOpen: true }, '', window.location.href);
 
       // 2. Define handler for popstate (Back button press)
-      const handlePopState = (event: PopStateEvent) => {
+      const handlePopState = () => {
         // When back is pressed, close the modal
         onClose();
       };
@@ -36,12 +44,10 @@ const NewsModal: React.FC<NewsModalProps> = ({ article, onClose }) => {
         document.body.style.overflow = 'auto';
       };
     }
-  }, [article]); // Intentionally omitting onClose from dependency to avoid loops, effectively runs on mount/unmount of article
+  }, [article, onClose]);
 
   // Wrapper for closing via UI button (X or Background)
   const handleManualClose = () => {
-    // Go back in history to remove the pushed state, this will trigger popstate -> onClose
-    // BUT, to avoid weird loops, we can just call onClose and history.back()
     if (window.history.state?.modalOpen) {
         window.history.back();
     } else {
@@ -86,8 +92,6 @@ const NewsModal: React.FC<NewsModalProps> = ({ article, onClose }) => {
     : article.url;
 
   // Logic to determine button state
-  // 1. If it's from Grid7 Timeline (Upcoming Launch), it's always a search.
-  // 2. If it's a fallback generated URL or includes google search, it's a search.
   const isLaunch = article.source === 'Grid7 Timeline';
   const isSearchLink = isLaunch || (!article.url || article.url === '#' || article.url.includes('google.com/search'));
 
@@ -107,10 +111,11 @@ const NewsModal: React.FC<NewsModalProps> = ({ article, onClose }) => {
       <div className="relative w-full max-w-2xl bg-dark-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
         
         {/* Header Image Area */}
-        <div className="relative h-64 sm:h-80 shrink-0">
+        <div className="relative h-64 sm:h-80 shrink-0 bg-dark-900">
           <img 
-            src={article.imageUrl} 
+            src={imgSrc} 
             alt={article.title} 
+            onError={() => setImgSrc(getRandomTechImage())}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark-800 via-transparent to-black/50"></div>
