@@ -5,8 +5,8 @@ import NewsModal from './components/NewsModal';
 import Timeline from './components/Timeline';
 import SplashScreen from './components/SplashScreen';
 import SubscribeModal from './components/SubscribeModal';
-import { CATEGORY_CONFIG, INITIAL_NEWS, UPCOMING_LAUNCHES } from './constants';
-import { NewsArticle, Category } from './types';
+import { CATEGORY_CONFIG, INITIAL_NEWS, UPCOMING_LAUNCHES, getRandomTechImage } from './constants';
+import { NewsArticle, Category, LaunchEvent } from './types';
 import { fetchLiveNews } from './services/geminiService';
 import { ArrowDown } from 'lucide-react';
 
@@ -20,12 +20,29 @@ const App: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [hasAutoRefreshed, setHasAutoRefreshed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter Logic
+  // Filter Logic including Search
   const filteredArticles = useMemo(() => {
-    if (activeCategory === Category.ALL) return articles;
-    return articles.filter(a => a.category === activeCategory);
-  }, [articles, activeCategory]);
+    let result = articles;
+
+    // 1. Category Filter
+    if (activeCategory !== Category.ALL) {
+      result = result.filter(a => a.category === activeCategory);
+    }
+
+    // 2. Search Filter
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      result = result.filter(a => 
+        a.title.toLowerCase().includes(lowerQuery) || 
+        a.summary.toLowerCase().includes(lowerQuery) ||
+        a.source.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    return result;
+  }, [articles, activeCategory, searchQuery]);
 
   const visibleArticles = filteredArticles.slice(0, visibleArticlesCount);
   const hasMore = visibleArticlesCount < filteredArticles.length;
@@ -62,6 +79,23 @@ const App: React.FC = () => {
     setVisibleArticlesCount(prev => prev + 6);
   };
 
+  // Handle Launch Item Click by converting it to a temporary NewsArticle for the Modal
+  const handleLaunchClick = (event: LaunchEvent) => {
+    const launchArticle: NewsArticle = {
+      id: event.id,
+      title: event.productName,
+      summary: event.description,
+      content: `Company: ${event.company}\nType: ${event.type}\nEstimated Launch: ${new Date(event.date).toLocaleDateString()}\n\nFull specifications are yet to be confirmed by the manufacturer. Stay tuned to Grid7 for live coverage of this ${event.type.toLowerCase()} launch event.`,
+      category: Category.GADGETS, // Default to Gadgets styling
+      source: 'Grid7 Timeline',
+      timestamp: new Date().toISOString(),
+      imageUrl: getRandomTechImage(), // Random tech image
+      url: `https://www.google.com/search?q=${encodeURIComponent(event.productName + ' launch')}`,
+      score: 10
+    };
+    setSelectedArticle(launchArticle);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-cyan-500 selection:text-black overflow-x-hidden">
       {/* Background Elements */}
@@ -82,6 +116,8 @@ const App: React.FC = () => {
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
           onSubscribeClick={() => setIsSubscribeOpen(true)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
 
         <main className="max-w-7xl mx-auto px-4 py-8 min-h-[calc(100vh-8rem)]">
@@ -89,10 +125,11 @@ const App: React.FC = () => {
           {/* News View */}
           {activeTab === 'news' && (
             <div className="animate-fade-in">
-              {/* Redesigned Category Control Deck */}
+              {/* Redesigned Category Control Deck - Horizontal Scroll on Mobile */}
               <div className="mb-10 relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent h-px w-full top-1/2 -z-10"></div>
-                <div className="flex flex-wrap gap-4 justify-center">
+                
+                <div className="flex overflow-x-auto no-scrollbar snap-x gap-3 pb-4 px-2 sm:flex-wrap sm:justify-center sm:overflow-visible">
                   {Object.values(Category).map((cat) => {
                     const config = CATEGORY_CONFIG[cat];
                     const isActive = activeCategory === cat;
@@ -105,7 +142,7 @@ const App: React.FC = () => {
                             setActiveCategory(cat);
                             setVisibleArticlesCount(6); // Reset pagination
                         }}
-                        className={`relative group flex items-center space-x-2 px-6 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 overflow-hidden ${
+                        className={`relative group flex-shrink-0 snap-start flex items-center space-x-2 px-6 py-3 rounded-xl border backdrop-blur-sm transition-all duration-300 overflow-hidden ${
                           isActive 
                             ? `border-transparent text-white shadow-[0_0_20px_rgba(0,0,0,0.5)] scale-105` 
                             : `bg-black/40 ${config.border} text-gray-400 hover:text-white hover:border-white/40`
@@ -147,6 +184,7 @@ const App: React.FC = () => {
               {visibleArticles.length === 0 && (
                  <div className="text-center py-32 text-gray-500 border border-dashed border-white/10 rounded-xl mt-8">
                     <p className="font-mono text-lg">NO DATA FOUND IN SECTOR.</p>
+                    {searchQuery && <p className="text-sm mt-2 text-cyan-600">Try adjusting your search protocol.</p>}
                  </div>
               )}
 
@@ -171,7 +209,10 @@ const App: React.FC = () => {
           {/* Launches View */}
           {activeTab === 'launches' && (
             <div className="animate-fade-in">
-              <Timeline events={UPCOMING_LAUNCHES} />
+              <Timeline 
+                events={UPCOMING_LAUNCHES} 
+                onEventClick={handleLaunchClick}
+              />
             </div>
           )}
         </main>

@@ -4,9 +4,9 @@ import { Bot, Monitor, Smartphone, Layers, Cpu } from 'lucide-react';
 // EMAIL CONFIGURATION
 // Please replace these with your actual keys from emailjs.com
 export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'service_fpfazxm',    // e.g., 'service_gmail'
-  TEMPLATE_ID: 'template_hr334s3',  // e.g., 'template_grid7'
-  PUBLIC_KEY: 'pNYvWtNpnp1gnMN_kH'     // e.g., 'user_123456'
+  SERVICE_ID: 'service_id_here',    // e.g., 'service_gmail'
+  TEMPLATE_ID: 'template_id_here',  // e.g., 'template_grid7'
+  PUBLIC_KEY: 'public_key_here'     // e.g., 'user_123456'
 };
 
 export const CATEGORY_CONFIG: Record<Category, { color: string; icon: any; bg: string; border: string; gradient: string }> = {

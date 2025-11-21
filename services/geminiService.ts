@@ -2,8 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { NewsArticle, Category } from "../types";
 import { getRandomTechImage } from "../constants";
 
-const apiKey = process.env.API_KEY || ''; 
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Initialization as per guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Fallback parser to extract JSON from Markdown code blocks
 const parseJSONResponse = (text: string) => {
@@ -21,8 +21,6 @@ const parseJSONResponse = (text: string) => {
 
 // Helper to perform a single category fetch
 const fetchCategoryNews = async (categoryPrompt: string): Promise<NewsArticle[]> => {
-    if (!ai) return [];
-
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -63,6 +61,12 @@ const fetchCategoryNews = async (categoryPrompt: string): Promise<NewsArticle[]>
                 return title.includes(itemTitle) || itemTitle.includes(title);
             });
 
+            let url = relatedChunk?.web?.uri;
+            if (!url) {
+                // Generate a Google Search fallback if no direct link
+                url = `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + item.source)}`;
+            }
+
             return {
                 id: `live-${Date.now()}-${Math.random()}`,
                 title: item.title,
@@ -71,7 +75,7 @@ const fetchCategoryNews = async (categoryPrompt: string): Promise<NewsArticle[]>
                 category: (Object.values(Category).includes(item.category) ? item.category : Category.OTHER) as Category,
                 source: item.source,
                 timestamp: new Date().toISOString(),
-                url: relatedChunk?.web?.uri || '#',
+                url: url,
                 imageUrl: getRandomTechImage(),
                 score: item.score || 8
             };
@@ -85,11 +89,6 @@ const fetchCategoryNews = async (categoryPrompt: string): Promise<NewsArticle[]>
 
 // PARALLEL FETCHING
 export const fetchLiveNews = async (): Promise<NewsArticle[]> => {
-  if (!ai) {
-    console.warn("No API Key found. Returning mock data.");
-    return [];
-  }
-
   console.log("Starting parallel fetch...");
 
   // We split the task into two parallel requests to speed up loading
@@ -103,8 +102,6 @@ export const fetchLiveNews = async (): Promise<NewsArticle[]> => {
 };
 
 export const generateNewsletterContent = async (email: string, topArticles: NewsArticle[]): Promise<string> => {
-    if (!ai) return "Mock email sent.";
-
     const articleContext = topArticles.slice(0, 3).map(a => `- ${a.title}: ${a.summary}`).join('\n');
 
     try {

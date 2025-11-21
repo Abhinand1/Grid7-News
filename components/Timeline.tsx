@@ -4,9 +4,10 @@ import { Rocket } from 'lucide-react';
 
 interface TimelineProps {
   events: LaunchEvent[];
+  onEventClick?: (event: LaunchEvent) => void;
 }
 
-const Timeline: React.FC<TimelineProps> = ({ events }) => {
+const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
   
   // Filter and Sort Logic
   const upcomingEvents = useMemo(() => {
@@ -61,7 +62,11 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => {
             const { day, month, year } = formatDate(event.date);
 
             return (
-              <div key={event.id} className={`relative flex flex-col md:flex-row items-start md:items-center ${isLeft ? 'md:flex-row-reverse' : ''}`}>
+              <div 
+                key={event.id} 
+                onClick={() => onEventClick && onEventClick(event)}
+                className={`relative flex flex-col md:flex-row items-start md:items-center cursor-pointer ${isLeft ? 'md:flex-row-reverse' : ''}`}
+              >
                 
                 {/* Mobile Date Badge (Visible on Small Screens) */}
                 <div className="md:hidden pl-12 mb-2 flex items-center gap-3">
@@ -73,7 +78,7 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => {
 
                 {/* Content Card */}
                 <div className={`w-full pl-12 md:pl-0 md:w-[calc(50%-4rem)] ${isLeft ? 'md:mr-auto' : 'md:ml-auto'}`}>
-                  <div className="group relative bg-dark-800 border border-white/10 p-6 rounded-2xl hover:border-cyan-500/40 transition-all duration-500 hover:bg-white/5 overflow-hidden">
+                  <div className="group relative bg-dark-800 border border-white/10 p-6 rounded-2xl hover:border-cyan-500/40 transition-all duration-500 hover:bg-white/5 overflow-hidden hover:shadow-[0_0_30px_rgba(6,182,212,0.1)] transform hover:-translate-y-1">
                     {/* Animated Glow */}
                     <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-violet-500/20 blur opacity-0 group-hover:opacity-100 transition duration-1000"></div>
 
@@ -93,6 +98,10 @@ const Timeline: React.FC<TimelineProps> = ({ events }) => {
                       <p className="text-gray-400 text-sm leading-relaxed font-light">
                         {event.description}
                       </p>
+                      
+                      <div className="mt-4 text-[10px] text-gray-500 font-mono group-hover:text-cyan-400 transition-colors flex items-center gap-1">
+                        TAP FOR DETAILS <Rocket size={10} />
+                      </div>
                     </div>
                   </div>
                 </div>
