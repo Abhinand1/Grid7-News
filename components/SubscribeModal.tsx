@@ -100,7 +100,7 @@ const SubscribeModal: React.FC<SubscribeModalProps> = ({ isOpen, onClose, articl
                 <div className="w-16 h-16 border-4 border-cyan-900 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-16 h-16 border-4 border-cyan-500 rounded-full border-t-transparent animate-spin"></div>
               </div>
-              <p className="font-mono text-sm text-cyan-400 animate-pulse">{setStatusMessage}</p>
+              <p className="font-mono text-sm text-cyan-400 animate-pulse">{statusMessage}</p>
             </div>
           )}
 
